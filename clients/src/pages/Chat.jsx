@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import Model from '../components/Model';
 import { BsEmojiSmile } from "react-icons/bs";
 import { ImAttachment } from "react-icons/im";
-import { IoSend } from "react-icons/io5";
+import { IoSend, IoArrowBack } from "react-icons/io5"; // Import the back arrow icon
 import { VscHubot } from "react-icons/vsc";
 import { fetchMessages, sendMessage, uploadFile } from '../apis/messages';
 import { fetchAiResponse } from '../apis/ai';
@@ -11,7 +11,7 @@ import { setOnlineUsers } from '../redux/onlineUsersSlice';
 import MessageHistory from '../components/MessageHistory';
 import io from "socket.io-client";
 import "./home.css";
-import { fetchChats, setNotifications } from '../redux/chatsSlice';
+import { fetchChats, setNotifications, setActiveChat } from '../redux/chatsSlice'; // Import setActiveChat
 import Loading from '../components/ui/Loading';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
@@ -121,14 +121,13 @@ function Chat(props) {
 
     useEffect(() => {
         if (isAiChat && activeChat) {
-            // Create the intro message object
             const introMsg = {
                 _id: 'intro-msg',
                 sender: { _id: activeChat._id, name: activeChat.chatName, profilePic: activeChat.photo },
                 message: { text: activeChat.introMessage },
                 createdAt: new Date().toISOString()
             };
-            setMessages([introMsg]); // Start the chat with the intro message
+            setMessages([introMsg]);
             setLoading(false);
         } else {
             const fetchMessagesFunc = async () => {
@@ -194,11 +193,16 @@ function Chat(props) {
     }
 
     return (
-        <div className={`${props.className} flex flex-col bg-bkg-dark`}>
+        <div className={`${props.className} flex flex-col h-full`}>
             {activeChat ? (
                 <>
-                    <div className='flex justify-between items-center p-4 bg-bkg-light border-b border-border'>
+                    <div className='flex justify-between items-center p-4 bg-bkg-light border-b border-border shrink-0'>
                         <div className='flex items-center gap-x-4'>
+                            {/* --- THIS IS THE FIX: The back button for mobile --- */}
+                            {/* It is hidden on medium screens and larger (md:hidden) */}
+                            <button onClick={() => dispatch(setActiveChat(null))} className="md:hidden text-text-secondary hover:text-text-primary">
+                                <IoArrowBack size={24} />
+                            </button>
                             <img className='w-10 h-10 rounded-full object-cover' src={isAiChat ? activeChat.photo : getChatPhoto(activeChat, activeUser)} alt="Profile" />
                             <div className='flex flex-col items-start'>
                                 <h5 className='text-md font-semibold text-text-primary'>{getChatName(activeChat, activeUser)}</h5>
@@ -208,12 +212,12 @@ function Chat(props) {
                         {!isAiChat && <div><Model /></div>}
                     </div>
                     
-                    <div className='flex-grow overflow-y-auto scrollbar-hide p-4'>
+                    <div className='flex-grow overflow-y-auto scrollbar-hide p-4 min-h-0'>
                         <MessageHistory messages={messages} />
                         {isTyping && <Typing />}
                     </div>
 
-                    <div className="p-4 bg-bkg-light border-t border-border">
+                    <div className="p-4 bg-bkg-light border-t border-border shrink-0">
                          {showPicker && (
                             <div className="absolute bottom-24 z-10">
                                <Picker data={data} onEmojiSelect={(e) => setMessage(message + e.native)} theme="dark" />
@@ -252,7 +256,7 @@ function Chat(props) {
                     </div>
                 </>
             ) : (
-                <div className="flex flex-col items-center justify-center h-full text-text-secondary gap-y-4">
+                <div className="hidden md:flex flex-col items-center justify-center h-full text-text-secondary gap-y-4">
                     <VscHubot className="text-accent" size={80} />
                     <h3 className='text-2xl font-medium text-text-primary'>Welcome to Samvaad</h3>
                     <p>Select a chat from the left to start messaging.</p>

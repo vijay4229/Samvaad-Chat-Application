@@ -15,6 +15,7 @@ import Sidebar from '../components/Sidebar';
 function Home() {
     const dispatch = useDispatch();
     const { showProfile } = useSelector((state) => state.profile);
+    const { activeChat } = useSelector((state) => state.chats) || {}; // Get activeChat to control mobile view
     const [searchResults, setSearchResults] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [search, setSearch] = useState("");
@@ -60,48 +61,54 @@ function Home() {
 
     return (
         <div className="flex h-screen w-full bg-bkg-dark font-sans">
-            <Sidebar />
+            {/* --- The Sidebar is hidden on mobile screens --- */}
+            <div className="hidden md:flex">
+                <Sidebar />
+            </div>
+            
             <div className="flex-grow flex min-w-0">
-                {showProfile ? (
-                    <Profile className="w-full md:w-[380px] h-full bg-bkg-light border-r border-border flex-shrink-0" />
-                ) : (
-                    <div className="w-full md:w-[380px] h-full bg-bkg-light flex flex-col border-r border-border flex-shrink-0">
-                        {/* --- THIS IS THE CORRECTED HEADER --- */}
-                        <div className="flex justify-between items-center p-5 border-b border-border">
-                            <h1 className="text-2xl font-bold text-text-primary">Samvaad</h1>
-                            <Group />
-                        </div>
-
-                        <div className="p-4">
-                            <div className="relative">
-                                <input
-                                    onChange={handleSearch}
-                                    value={search}
-                                    className='w-full bg-bkg-dark text-text-primary tracking-wider pl-10 pr-4 py-2 rounded-lg outline-none border-2 border-transparent focus:border-accent'
-                                    type="text"
-                                    name="search"
-                                    placeholder="Search or start new chat"
-                                />
-                                <div className='absolute top-1/2 left-3 -translate-y-1/2'>
-                                    <BsSearch className="text-text-secondary" />
-                                </div>
+                {/* --- START: RESPONSIVE LOGIC --- */}
+                {/* On mobile, this panel is hidden if a chat is active */}
+                <div className={`h-full flex-col border-r border-border flex-shrink-0 ${activeChat ? 'hidden md:flex' : 'flex w-full md:w-[380px]'}`}>
+                    {showProfile ? (
+                        <Profile className="w-full h-full bg-bkg-light" />
+                    ) : (
+                        <>
+                            <div className="flex justify-between items-center p-5 border-b border-border">
+                                <h1 className="text-2xl font-bold text-text-primary">Samvaad</h1>
+                                <Group />
                             </div>
-                            {search && (
-                                <div className='absolute z-10 w-[340px] mt-2 bg-bkg-dark rounded-lg shadow-lg'>
-                                    <Search searchResults={searchResults} isLoading={isLoading} handleClick={handleClick} search={search} />
+                            <div className="p-4">
+                                <div className="relative">
+                                    <input
+                                        onChange={handleSearch}
+                                        value={search}
+                                        className='w-full bg-bkg-dark text-text-primary pl-10 pr-4 py-2 rounded-lg outline-none border-2 border-transparent focus:border-accent'
+                                        type="text"
+                                        placeholder="Search or start new chat"
+                                    />
+                                    <div className='absolute top-1/2 left-3 -translate-y-1/2'>
+                                        <BsSearch className="text-text-secondary" />
+                                    </div>
                                 </div>
-                            )}
-                        </div>
-                        
-                        {/* The duplicate <Group /> component that was here has been removed */}
-                        
-                        <div className="flex-grow overflow-y-auto scrollbar-hide">
-                            <Contacts />
-                        </div>
-                    </div>
-                )}
+                                {search && (
+                                    <div className='absolute z-10 w-[calc(100%-2rem)] mt-2 bg-bkg-dark rounded-lg shadow-lg'>
+                                        <Search searchResults={searchResults} isLoading={isLoading} handleClick={handleClick} search={search} />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex-grow overflow-y-auto scrollbar-hide">
+                                <Contacts />
+                            </div>
+                        </>
+                    )}
+                </div>
                 
-                <Chat className="flex-grow h-full" />
+                {/* On mobile, the Chat window is only shown if a chat is active */}
+                <div className={`h-full flex-grow ${activeChat ? 'flex' : 'hidden md:flex'}`}>
+                    <Chat />
+                </div>
+                {/* --- END: RESPONSIVE LOGIC --- */}
             </div>
         </div>
     );
