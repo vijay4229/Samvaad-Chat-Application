@@ -58,5 +58,8 @@
   },
   "devDependencies": {
     "tailwindcss": "^3.2.4"
+  },
+  "overrides": {
+    "react": "^18.2.0"
   }
 }
