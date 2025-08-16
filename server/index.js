@@ -17,7 +17,7 @@ const app = express();
 // We've added your live Vercel URL to the list of allowed origins
 const allowedOrigins = [
     "http://localhost:3000",
-    "https://samvaad-chat-application-i4jy.vercel.app"
+    "https://samvaad-chat-application-kappa.vercel.app"
 ];
 
 app.use(cors({
