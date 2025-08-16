@@ -8,28 +8,32 @@ import cors from 'cors';
 import userRoutes from './routes/user.js';
 import chatRoutes from './routes/chat.js';
 import messageRoutes from './routes/message.js';
-import aiRoutes from './routes/aiRoutes.js'; // --- 1. IMPORT THE NEW AI ROUTE ---
+import aiRoutes from './routes/aiRoutes.js';
 import * as Server from 'socket.io';
 
 const app = express();
-const corsConfig = {
-  origin: process.env.BASE_URL,
-  credentials: true,
-};
+
+// --- THIS IS THE FIX ---
+// We've added your live Vercel URL to the list of allowed origins
+const allowedOrigins = [
+    "http://localhost:3000",
+    "https://samvaad-chat-application-i4jy.vercel.app"
+];
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+}));
+// --- END OF FIX ---
+
 const PORT=process.env.PORT || 8000
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-// app.use(cors());
-app.use(cors({
-    origin: "http://localhost:3000", // Keeps it working on your computer
-    credentials: true
-}));
-// We will replace 'your-vercel-app-name' later.
 app.use('/', userRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/message', messageRoutes);
-app.use('/api/ai', aiRoutes); // --- 2. ADD THE NEW AI ROUTE MIDDLEWARE ---
+app.use('/api/ai', aiRoutes);
 mongoose.set('strictQuery', false);
 mongoDBConnect();
 const server = app.listen(PORT, () => {
@@ -38,7 +42,7 @@ const server = app.listen(PORT, () => {
 const io = new Server.Server(server, {
   pingTimeout: 60000,
   cors: {
-    origin: 'http://localhost:3000',
+    origin: allowedOrigins,
   },
 });
 
@@ -61,7 +65,7 @@ io.on('connection', (socket) => {
 
   socket.on('new message', (newMessageRecieve) => {
     var chat = newMessageRecieve.chatId;
-    if (!chat.users) return; // Added a check to prevent crash
+    if (!chat.users) return;
     chat.users.forEach((user) => {
       if (user._id == newMessageRecieve.sender._id) return;
       socket.in(user._id).emit('message recieved', newMessageRecieve);
