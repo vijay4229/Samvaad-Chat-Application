@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { searchUsers, validUser } from '../apis/auth';
 import { setActiveUser } from '../redux/activeUserSlice';
-import { BsSearch } from "react-icons/bs";
+import { BsSearch, BsThreeDotsVertical } from "react-icons/bs";
+import { CgProfile } from "react-icons/cg";
+import { IoLogOutOutline } from "react-icons/io5";
 import Chat from './Chat';
 import Profile from "../components/Profile";
 import { acessCreate } from "../apis/chat.js";
@@ -11,14 +13,17 @@ import Group from '../components/Group';
 import Contacts from '../components/Contacts';
 import Search from '../components/group/Search';
 import Sidebar from '../components/Sidebar';
+import { setShowProfile } from '../redux/profileSlice';
 
 function Home() {
     const dispatch = useDispatch();
     const { showProfile } = useSelector((state) => state.profile);
-    const { activeChat } = useSelector((state) => state.chats) || {}; // Get activeChat to control mobile view
+    const { activeChat } = useSelector((state) => state.chats) || {};
+    const activeUser = useSelector((state) => state.activeUser);
     const [searchResults, setSearchResults] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [search, setSearch] = useState("");
+    const [showMenu, setShowMenu] = useState(false); // State for mobile menu
 
     const handleSearch = (e) => {
         setSearch(e.target.value);
@@ -28,6 +33,13 @@ function Home() {
         await acessCreate({ userId: e._id });
         dispatch(fetchChats());
         setSearch("");
+    };
+
+    const handleLogout = () => {
+        if (window.confirm("Are you sure you want to log out?")) {
+            localStorage.removeItem("userToken");
+            window.location.href = "/login";
+        }
     };
 
     useEffect(() => {
@@ -61,23 +73,45 @@ function Home() {
 
     return (
         <div className="flex h-screen w-full bg-bkg-dark font-sans">
-            {/* --- The Sidebar is hidden on mobile screens --- */}
+            {/* Sidebar is hidden on mobile (md and below) */}
             <div className="hidden md:flex">
                 <Sidebar />
             </div>
             
             <div className="flex-grow flex min-w-0">
-                {/* --- START: RESPONSIVE LOGIC --- */}
-                {/* On mobile, this panel is hidden if a chat is active */}
+                {/* --- START: RESPONSIVE CONTACTS/PROFILE PANEL --- */}
+                {/* This panel is hidden on mobile if a chat is active */}
                 <div className={`h-full flex-col border-r border-border flex-shrink-0 ${activeChat ? 'hidden md:flex' : 'flex w-full md:w-[380px]'}`}>
                     {showProfile ? (
                         <Profile className="w-full h-full bg-bkg-light" />
                     ) : (
                         <>
-                            <div className="flex justify-between items-center p-5 border-b border-border">
+                            {/* --- THIS IS THE NEW MOBILE-ONLY HEADER --- */}
+                            <div className="md:hidden flex justify-between items-center p-4 bg-bkg-light border-b border-border">
+                                <img src={activeUser.profilePic} alt="My Profile" className="w-10 h-10 rounded-full object-cover"/>
+                                <div className="relative">
+                                    <button onClick={() => setShowMenu(!showMenu)}>
+                                        <BsThreeDotsVertical size={20} className="text-text-secondary" />
+                                    </button>
+                                    {showMenu && (
+                                        <div className="absolute top-full right-0 mt-2 w-48 bg-bkg-dark rounded-md shadow-lg z-20">
+                                            <button onClick={() => { dispatch(setShowProfile(true)); setShowMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-bkg-light flex items-center gap-x-3">
+                                                <CgProfile /> Profile
+                                            </button>
+                                            <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-bkg-light flex items-center gap-x-3">
+                                                <IoLogOutOutline /> Logout
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            {/* --- DESKTOP HEADER --- */}
+                            <div className="hidden md:flex justify-between items-center p-5 border-b border-border">
                                 <h1 className="text-2xl font-bold text-text-primary">Samvaad</h1>
                                 <Group />
                             </div>
+
                             <div className="p-4">
                                 <div className="relative">
                                     <input
@@ -97,6 +131,11 @@ function Home() {
                                     </div>
                                 )}
                             </div>
+                            
+                            <div className="md:hidden px-4 pb-2 border-b border-border">
+                                <Group />
+                            </div>
+                            
                             <div className="flex-grow overflow-y-auto scrollbar-hide">
                                 <Contacts />
                             </div>
@@ -104,11 +143,11 @@ function Home() {
                     )}
                 </div>
                 
-                {/* On mobile, the Chat window is only shown if a chat is active */}
+                {/* --- RESPONSIVE CHAT WINDOW --- */}
+                {/* On mobile, this is only shown if a chat is active */}
                 <div className={`h-full flex-grow ${activeChat ? 'flex' : 'hidden md:flex'}`}>
                     <Chat />
                 </div>
-                {/* --- END: RESPONSIVE LOGIC --- */}
             </div>
         </div>
     );

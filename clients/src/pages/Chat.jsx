@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import Model from '../components/Model';
 import { BsEmojiSmile } from "react-icons/bs";
 import { ImAttachment } from "react-icons/im";
-import { IoSend, IoArrowBack } from "react-icons/io5"; // Import the back arrow icon
+import { IoSend, IoArrowBack } from "react-icons/io5";
 import { VscHubot } from "react-icons/vsc";
 import { fetchMessages, sendMessage, uploadFile } from '../apis/messages';
 import { fetchAiResponse } from '../apis/ai';
@@ -11,7 +11,7 @@ import { setOnlineUsers } from '../redux/onlineUsersSlice';
 import MessageHistory from '../components/MessageHistory';
 import io from "socket.io-client";
 import "./home.css";
-import { fetchChats, setNotifications, setActiveChat } from '../redux/chatsSlice'; // Import setActiveChat
+import { fetchChats, setNotifications, setActiveChat } from '../redux/chatsSlice';
 import Loading from '../components/ui/Loading';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
@@ -34,10 +34,8 @@ function Chat(props) {
     const fileInputRef = useRef(null);
     const [isUploading, setIsUploading] = useState(false);
     const { users: onlineUsers } = useSelector((state) => state.onlineUsers);
-    
     const [typing, setTyping] = useState(false);
     const typingTimeoutRef = useRef(null);
-
     const isAiChat = !!activeChat?.personality;
 
     const isUserOnline = () => {
@@ -48,10 +46,8 @@ function Chat(props) {
 
     const handleSendMessage = async (messageContent) => {
         if (!activeChat || (messageContent.text && !messageContent.text.trim())) return;
-
         setMessage("");
         setShowPicker(false);
-
         const userMessage = {
             _id: Date.now(),
             sender: { _id: activeUser.id, name: activeUser.name, profilePic: activeUser.profilePic },
@@ -59,7 +55,6 @@ function Chat(props) {
             createdAt: new Date().toISOString()
         };
         setMessages((prevMessages) => [...prevMessages, userMessage]);
-
         if (isAiChat) {
             setIsTyping(true);
             const aiResponse = await fetchAiResponse({
@@ -67,7 +62,6 @@ function Chat(props) {
                 personality: activeChat.personality
             });
             setIsTyping(false);
-
             if (aiResponse) {
                 const aiMessage = {
                     _id: Date.now() + 1,
@@ -172,16 +166,13 @@ function Chat(props) {
     const handleTyping = (e) => {
         setMessage(e.target.value);
         if (!socket || isAiChat) return;
-
         if (!typing) {
             setTyping(true);
             socket.emit('typing', activeChat._id);
         }
-
         if (typingTimeoutRef.current) {
             clearTimeout(typingTimeoutRef.current);
         }
-
         typingTimeoutRef.current = setTimeout(() => {
             socket.emit("stop typing", activeChat._id);
             setTyping(false);
@@ -189,17 +180,15 @@ function Chat(props) {
     };
 
     if (loading) {
-        return <div className={`${props.className} flex items-center justify-center`}><Loading /></div>;
+        return <div className="flex items-center justify-center w-full h-full"><Loading /></div>;
     }
 
     return (
-        <div className={`${props.className} flex flex-col h-full`}>
+        <div className="flex flex-col h-full w-full">
             {activeChat ? (
                 <>
                     <div className='flex justify-between items-center p-4 bg-bkg-light border-b border-border shrink-0'>
                         <div className='flex items-center gap-x-4'>
-                            {/* --- THIS IS THE FIX: The back button for mobile --- */}
-                            {/* It is hidden on medium screens and larger (md:hidden) */}
                             <button onClick={() => dispatch(setActiveChat(null))} className="md:hidden text-text-secondary hover:text-text-primary">
                                 <IoArrowBack size={24} />
                             </button>
@@ -209,7 +198,8 @@ function Chat(props) {
                                 {isUserOnline() && <p className='text-xs text-green-400'>Online</p>}
                             </div>
                         </div>
-                        {!isAiChat && <div><Model /></div>}
+                        {/* --- THIS IS THE FIX: Only show the Model for non-AI chats --- */}
+                        {!isAiChat && <div className="hidden md:block"><Model /></div>}
                     </div>
                     
                     <div className='flex-grow overflow-y-auto scrollbar-hide p-4 min-h-0'>
@@ -256,7 +246,7 @@ function Chat(props) {
                     </div>
                 </>
             ) : (
-                <div className="hidden md:flex flex-col items-center justify-center h-full text-text-secondary gap-y-4">
+                <div className="hidden md:flex flex-col items-center justify-center h-full w-full text-text-secondary gap-y-4">
                     <VscHubot className="text-accent" size={80} />
                     <h3 className='text-2xl font-medium text-text-primary'>Welcome to Samvaad</h3>
                     <p>Select a chat from the left to start messaging.</p>
